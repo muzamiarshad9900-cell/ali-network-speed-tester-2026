@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Speed Tester</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 25px 15px;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+.card {
+  max-width: 420px;
+  margin: 35px auto;
+  padding: 25px 18px;
+  background: #1e293b;
+  border-radius: 20px;
+}
+h1 { color: #38bdf8; }
+p { color: #cbd5e1; }
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 14px 25px;
+  background: #22c55e;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+.result {
+  margin-top: 20px;
+  padding: 14px;
+  background: #334155;
+  border-radius: 10px;
+  font-size: 18px;
+}
+small { color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Network Speed Tester</h1>
+  <p>Check your internet connection</p>
+  <button onclick="startTest()">Start Test</button>
+  <div class="result" id="status">Ready to test</div>
+  <div class="result" id="ping">Ping: -- ms</div>
+  <div class="result" id="download">Download: -- Mbps</div>
+  <div class="result" id="upload">Upload: -- Mbps</div>
+  <p><small>DIT Project | Network Speed Tester</small></p>
+</div>
+<script>
+async function startTest() {
+  const status = document.getElementById("status");
+  const ping = document.getElementById("ping");
+  const download = document.getElementById("download");
+  const upload = document.getElementById("upload");
+
+  status.textContent = "Testing connection...";
+  ping.textContent = "Ping: Testing...";
+  download.textContent = "Download: Testing...";
+  upload.textContent = "Upload: Not tested";
+
+  try {
+    const url = "https://www.cloudflare.com/cdn-cgi/trace?test=" + Date.now();
+    const start = performance.now();
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error("Connection failed");
+    await response.text();
+    const elapsed = performance.now() - start;
+
+    ping.textContent = "Ping: " + Math.round(elapsed) + " ms";
+    download.textContent = "Download: Measuring...";
+    status.textContent = "Checking download speed...";
+
+    const bytes = 500000;
+    const testUrl =
+      "https://speed.cloudflare.com/__down?bytes=" +
+      bytes + "&test=" + Date.now();
+    const t1 = performance.now();
+    const result = await fetch(testUrl, { cache: "no-store" });
+    if (!result.ok) throw new Error("Download test failed");
+    const data = await result.arrayBuffer();
+    const seconds = (performance.now() - t1) / 1000;
+    const mbps = (data.byteLength * 8 / seconds / 1000000).toFixed(2);
+
+    download.textContent = "Download: " + mbps + " Mbps";
+    upload.textContent = "Upload: Not available yet";
+    status.textContent = "Test completed!";
+  } catch (error) {
+    status.textContent = "Test failed. Check internet and try again.";
+    download.textContent = "Download: -- Mbps";
+    upload.textContent = "Upload: Not tested";
+  }
+}
+</script>
+</body>
+</html>
